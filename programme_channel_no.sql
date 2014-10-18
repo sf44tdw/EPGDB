@@ -15,7 +15,7 @@ WHERE channel.channel_id=programme.channel_id and not exists (select * from paid
 *_start_datetime     :番組の開始時刻
  */
 DELIMITER //
-CREATE PROCEDURE GET_TITLE(IN `_channel_no` int,IN `_start_datetime` DATETIME,)
+CREATE PROCEDURE GET_TITLE(IN `_channel_no` int,IN `_start_datetime` DATETIME)
 BEGIN
 SELECT `title` FROM `programme_channel_no` WHERE channel_no = _channel_no and start_datetime = _start_datetime;
 END//
