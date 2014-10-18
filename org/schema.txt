@@ -1,0 +1,156 @@
+﻿/* チャンネル一覧テーブル。チャンネルの読み替え用。
+channel_id  :EPGに書かれていたチャンネルID
+channel_no  :対応する物理チャンネル番号(例:東京タワーからのnhk総合なら27)
+display-name:EPGに書かれていた局名
+insert_datetime :この情報の追加日時
+ */
+CREATE TABLE `channel` (
+  `channel_id` char(7) NOT NULL,
+  `channel_no` int NOT NULL,
+  `display-name` text,
+  `insert_datetime` DATETIME NOT NULL,
+  PRIMARY KEY (`channel_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+/* チャンネルIDと物理番号が等しい組み合わせを明示的に禁止(チャンネルIDがユニークなので別に要らない)
+ */
+ALTER TABLE `channel` ADD UNIQUE ch_id_no(`channel_id`, `channel_no`);
+
+/* チャンネル一覧テーブルに内容を追加する。追加日時は自動入力する。
+ */
+DELIMITER //
+CREATE PROCEDURE INSERT_CHANNEL(IN `_channel_id` char(7),IN `_channel_no` int,IN `_display-name` text)
+BEGIN
+INSERT INTO `channel` (`channel_id`,`channel_no`,`display-name`,`insert_datetime`) VALUES (`_channel_id`,`_channel_no`,`_display-name`,(SELECT NOW()));
+END//
+DELIMITER ;
+
+
+/*番組情報用。
+*開始時刻が終了時刻より前にあってもDB側では感知しない。
+id              :主キー。自動で生成され、加算される。
+event_id        :番組ID(しょっちゅう再利用されているから主キーにはしない)
+channel         :チャンネルID(チャンネル一覧テーブルから参照させて物理チャンネルを確認する。)
+title           :タイトル
+start           :開始時刻(インデックスつき)
+stop            :終了時刻
+insert_datetime :この情報の追加日時
+番組ID,チャンネルID,開始時刻の全てが同じデータは登録できない。(衛星放送の場合、全ての局が全ての局のEPGを放映しているらしいため)
+ */
+CREATE TABLE `programme` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `channel_id` char(7) NOT NULL,
+  `event_id` int(11) DEFAULT NULL,
+  `title` text NOT NULL,
+  `start_datetime` datetime NOT NULL,
+  `stop_datetime` datetime NOT NULL,
+  `insert_datetime` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `ch_id_no` (`channel_id`,`event_id`,`start_datetime`),
+  KEY `channel_id` (`channel_id`),
+  KEY `start_datetime_i` (`start_datetime`),
+  CONSTRAINT `programme_ibfk_1` FOREIGN KEY (`channel_id`) REFERENCES `channel` (`channel_id`)
+) ENGINE=InnoDB;
+
+
+/*
+番組情報テーブルに内容を追加する。追加日時は自動入力する。
+チャンネルテーブルにチャンネルIDが登録されていない場合、参照整合性制約により登録できないことを前提とする。
+SQLException e.getSQLState()でエラー番号はわかるのでそうする。
+ */
+DELIMITER //
+CREATE PROCEDURE INSERT_PROGRAMME(IN `_channel_id` char(7),IN `_event_id` int,IN `_title` text,IN `_start_datetime` DATETIME,IN `_stop_datetime` DATETIME)
+BEGIN
+INSERT INTO `programme` (`channel_id`,`event_id`,`title`,`start_datetime`,`stop_datetime`,`insert_datetime`) VALUES (`_channel_id`,`_event_id`,`_title`,`_start_datetime`,`_stop_datetime`,(SELECT NOW()));
+END//
+DELIMITER ;
+
+-- /*
+-- 3日前より古い番組情報を削除する。
+--  */
+-- DELETE FROM programme WHERE date_add(current_date, interval -3 day) > start_datetime;
+
+/*
+物理チャンネル読み替え用ビュー。情報の確認だけならこれだけで用が足りるはず。有料放送をはじめとして、視聴不可能と設定されたチャンネルは表示しない
+ */
+CREATE SQL SECURITY INVOKER VIEW programme_channel_no AS 
+SELECT channel.channel_id,
+channel.channel_no,
+programme.title,
+programme.start_datetime,
+programme.stop_datetime FROM channel,programme
+WHERE channel.channel_id=programme.channel_id and not exists (select * from paidBroadcasting where paidBroadcasting.channel_id=channel.channel_id);
+
+
+/*有料チャンネル判別テーブル。加入しないと見られないチャンネルなのかどうかを入力する。
+*このテーブルに登録されていないか、値がtrue(1)になっているチャンネルは視聴可能なものであるとして扱う
+*channel_no_         :EPGに書かれていたチャンネルID
+*isPaidBroadcastin g:有料ならtrue 無料か見られるならfalse
+ */
+CREATE TABLE `paidBroadcasting` (
+`channel_id` char(7) NOT NULL,
+`isPaidBroadcasting` BOOLEAN NOT NULL,
+PRIMARY KEY (`channel_id`),
+FOREIGN KEY (`channel_id`) REFERENCES `channel` (`channel_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+/*有料チャンネル判別テーブルへのデータ入力用テーブル。ここから判別テーブルに転記する。
+channel_no  :物理チャンネル番号(例:東京タワーからのnhk総合なら27)
+ */
+CREATE TABLE `temp_PaidBroadcasting` (
+`channel_no` int NOT NULL,
+PRIMARY KEY (`channel_no`)
+) ENGINE=InnoDB; 
+
+/*
+有料チャンネル判別テーブルへのデータ入力用テーブルに内容を追加する。
+ */
+DELIMITER//
+CREATE PROCEDURE INSERT_temp_PaidBroadcasting(IN `_channel_no` int)
+BEGIN
+INSERT INTO `temp_PaidBroadcasting` (`channel_no`) VALUES (`_channel_no`);
+END//
+DELIMITER ;
+
+/*
+*有料区分自動入力プロシージャ。
+*有料放送のチャンネルだけ入力する。事前に一時テーブルにとろくs対チャンネル番号を入力しておく必要がある。
+ */
+DELIMITER //
+CREATE PROCEDURE INSERT_PAIDBROADCASTING()
+BEGIN
+--変数リストの宣言
+DECLARE ChannelID char(7);
+DECLARE ChannelNo int;
+
+ -- ハンドラで利用する変数 v_done を宣言
+ DECLARE v_done INT DEFAULT 0;
+
+--カーソルの宣言。一時テーブルから、見られない有料放送のチャンネルIDとチャンネル番号の重複のない一覧を取得。
+DECLARE PBCs cursor FOR SELECT DISTINCT `channel_id`,`channel_no` FROM `channel` WHERE `channel_no`= (SELECT DISTINCT `channel_no` FROM `temp_PaidBroadcasting`);
+ 
+ -- SQLステートが02000の場合にv_doneを1にするハンドラを宣言
+DECLARE continue handler FOR sqlstate '02000' SET v_done = 1;
+
+--カーソルを開く
+OPEN PBCs;
+
+--FETCH（行の取り出し）
+FETCH PBCs INTO ChannelID,ChannelNo;
+
+--LOOP
+    while v_done != 1 do
+    
+    --テーブルに値を入力
+    INSERT INTO `paidBroadcasting`(`channel_id`,`isPaidBroadcasting`)VALUES(ChannelID,TRUE);
+    --FETCH（行の取り出し）
+    FETCH PBCs INTO ChannelID,ChannelNo;
+    END WHILE;
+
+CLOSE PBCs;
+
+--一時テーブルの内容を消去する。
+DELETE FROM `temp_PaidBroadcasting`;
+
+END//
+DELIMITER ;
