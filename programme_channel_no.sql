@@ -24,7 +24,7 @@ DELIMITER ;
 
 
 /*
-物理チャンネル読み替え用ビューから指定されたチャンネルの、指定時刻に始まる番組の番組情報を取得する。(2件以上あるかもしれない)
+物理チャンネル読み替え用ビューから指定されたチャンネルの、現在の時刻以降の指定時刻に始まる番組の番組情報を取得する。(2件以上あるかもしれない)
 *_channel_id:チャンネルID
 *_channel_no         :物理チャンネル番号
 *_start_datetime     :番組の開始時刻
@@ -32,7 +32,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE GET_PROGRAMME_FUZZY(IN `_channel_id` char(7), IN `_channel_no` int,IN `_start_datetime` DATETIME)
 BEGIN
-SELECT * FROM `programme_channel_no` WHERE channel_id=_channel_id and  channel_no = _channel_no and start_datetime = _start_datetime;
+SELECT * FROM `programme_channel_no` WHERE channel_id =_channel_id and channel_no = _channel_no and start_datetime >= NOW() and start_datetime = _start_datetime;
 END//
 DELIMITER ;
 
