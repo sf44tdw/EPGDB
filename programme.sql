@@ -11,7 +11,7 @@ insert_datetime :この情報の追加日時
  */
 CREATE TABLE `programme` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `channel_id` char(7) NOT NULL,
+  `channel_id` VARCHAR(20) NOT NULL,
   `event_id` int(11) DEFAULT NULL,
   `title` text NOT NULL,
   `start_datetime` datetime NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE `programme` (
 SQLException e.getSQLState()でエラー番号はわかるのでそうする。
  */
 DELIMITER //
-CREATE PROCEDURE INSERT_PROGRAMME(IN `_channel_id` char(7),IN `_event_id` int,IN `_title` text,IN `_start_datetime` DATETIME,IN `_stop_datetime` DATETIME)
+CREATE PROCEDURE INSERT_PROGRAMME(IN `_channel_id` VARCHAR(20),IN `_event_id` int,IN `_title` text,IN `_start_datetime` DATETIME,IN `_stop_datetime` DATETIME)
 BEGIN
 INSERT INTO `programme` (`channel_id`,`event_id`,`title`,`start_datetime`,`stop_datetime`,`insert_datetime`) VALUES (`_channel_id`,`_event_id`,`_title`,`_start_datetime`,`_stop_datetime`,(SELECT NOW()));
 END//

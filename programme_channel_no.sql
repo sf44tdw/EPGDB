@@ -30,7 +30,7 @@ DELIMITER ;
 *_start_datetime     :番組の開始時刻
  */
 DELIMITER //
-CREATE PROCEDURE GET_PROGRAMME_FUZZY(IN `_channel_id` char(7), IN `_channel_no` int,IN `_start_datetime` DATETIME)
+CREATE PROCEDURE GET_PROGRAMME_FUZZY(IN `_channel_id` VARCHAR(20), IN `_channel_no` int,IN `_start_datetime` DATETIME)
 BEGIN
 SELECT * FROM `programme_channel_no` WHERE channel_id =_channel_id and channel_no = _channel_no and start_datetime >= NOW() and start_datetime = _start_datetime;
 END//
@@ -45,7 +45,7 @@ DELIMITER ;
 *_start_datetime     :番組の開始時刻
  */
 DELIMITER //
-CREATE PROCEDURE GET_PROGRAMME_STRICT(IN `_channel_id` char(7), IN `_channel_no` int,IN `_event_id` int,IN `_start_datetime` DATETIME)
+CREATE PROCEDURE GET_PROGRAMME_STRICT(IN `_channel_id` VARCHAR(20), IN `_channel_no` int,IN `_event_id` int,IN `_start_datetime` DATETIME)
 BEGIN
 SELECT * FROM `programme_channel_no` WHERE channel_id = _channel_id and channel_no=_channel_no and event_id=_event_id and start_datetime=_start_datetime;
 END//

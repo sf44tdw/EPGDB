@@ -4,7 +4,7 @@
 *isPaidBroadcastin g:有料ならtrue 無料か見られるならfalse
  */
 CREATE TABLE `paidBroadcasting` (
-`channel_id` char(7) NOT NULL,
+`channel_id` VARCHAR(20) NOT NULL,
 `isPaidBroadcasting` BOOLEAN NOT NULL,
 PRIMARY KEY (`channel_id`),
 FOREIGN KEY (`channel_id`) REFERENCES `channel` (`channel_id`)

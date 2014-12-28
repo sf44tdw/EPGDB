@@ -5,7 +5,7 @@ display-name:EPGに書かれていた局名
 insert_datetime :この情報の追加日時
  */
 CREATE TABLE `channel` (
-  `channel_id` char(7) NOT NULL,
+  `channel_id` VARCHAR(20) NOT NULL,
   `channel_no` int NOT NULL,
   `display-name` text,
   `insert_datetime` DATETIME NOT NULL,
@@ -19,7 +19,7 @@ ALTER TABLE `channel` ADD UNIQUE ch_id_no(`channel_id`, `channel_no`);
 /* チャンネル一覧テーブルに内容を追加する。追加日時は自動入力する。
  */
 DELIMITER //
-CREATE PROCEDURE INSERT_CHANNEL(IN `_channel_id` char(7),IN `_channel_no` int,IN `_display-name` text)
+CREATE PROCEDURE INSERT_CHANNEL(IN `_channel_id` VARCHAR(20),IN `_channel_no` int,IN `_display-name` text)
 BEGIN
 INSERT INTO `channel` (`channel_id`,`channel_no`,`display-name`,`insert_datetime`) VALUES (`_channel_id`,`_channel_no`,`_display-name`,(SELECT NOW()));
 END//
