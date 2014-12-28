@@ -18,11 +18,11 @@ DELIMITER //
 CREATE PROCEDURE INSERT_PAIDBROADCASTING()
 BEGIN
 --変数リストの宣言
-DECLARE ChannelID char(7);
+DECLARE ChannelID VARCHAR(20);
 DECLARE ChannelNo int;
 
  -- ハンドラで利用する変数 v_done を宣言
- DECLARE v_done INT DEFAULT 0;
+DECLARE v_done INT DEFAULT 0;
 
 --カーソルの宣言。一時テーブルから、見られない有料放送のチャンネルIDとチャンネル番号の重複のない一覧を取得。
 DECLARE PBCs cursor FOR SELECT DISTINCT `channel_id`,`channel_no` FROM `channel` WHERE `channel_no`= (SELECT DISTINCT `channel_no` FROM `temp_PaidBroadcasting`);

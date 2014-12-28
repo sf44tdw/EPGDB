@@ -9,7 +9,7 @@ PRIMARY KEY (`channel_no`)
 /*
 有料チャンネル判別テーブルへのデータ入力用テーブルに内容を追加する。
  */
-DELIMITER//
+DELIMITER //
 CREATE PROCEDURE INSERT_temp_PaidBroadcasting(IN `_channel_no` int)
 BEGIN
 INSERT INTO `temp_PaidBroadcasting` (`channel_no`) VALUES (`_channel_no`);
