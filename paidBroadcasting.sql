@@ -17,37 +17,37 @@ FOREIGN KEY (`channel_id`) REFERENCES `channel` (`channel_id`)
 DELIMITER //
 CREATE PROCEDURE INSERT_PAIDBROADCASTING()
 BEGIN
---変数リストの宣言
+
 DECLARE ChannelID VARCHAR(20);
 DECLARE ChannelNo int;
 
--- ハンドラで利用する変数 v_done を宣言
+/*ハンドラで利用する変数 v_done を宣言 */
 DECLARE v_done INT DEFAULT 0;
 
---カーソルの宣言。一時テーブルに登録されたチャンネル番号を元にチャンネル一覧テーブルを検索し、チャンネルIDとチャンネル番号の重複のない一覧を取得。
-DECLARE PBCs cursor FOR SELECT DISTINCT `channel_id`,`channel_no` FROM `channel` WHERE `channel_no`= (SELECT DISTINCT `channel_no` FROM `temp_PaidBroadcasting`);
+/*カーソルの宣言。一時テーブルに登録されたチャンネル番号を元にチャンネル一覧テーブルを検索し、チャンネルIDとチャンネル番号の重複のない一覧を取得。*/
+DECLARE PBCs cursor FOR SELECT DISTINCT `channel_id`,`channel_no` FROM `channel` WHERE `channel_no` IN (SELECT DISTINCT `channel_no` FROM `temp_PaidBroadcasting`);
  
- -- SQLステートが02000(検索する行がなくなった)の場合にv_doneを1にするハンドラを宣言
+/*SQLステートが02000(検索する行がなくなった)の場合にv_doneを1にするハンドラを宣言*/
 DECLARE continue handler FOR sqlstate '02000' SET v_done = 1;
 
---カーソルを開く
+/*カーソルを開く*/
 OPEN PBCs;
 
---FETCH（行の取り出し）
+/*FETCH（行の取り出し）*/
 FETCH PBCs INTO ChannelID,ChannelNo;
 
---LOOP
+/*LOOP*/
     while v_done != 1 do
     
-    --テーブルに値を入力
+    /*テーブルに値を入力*/
     INSERT INTO `paidBroadcasting`(`channel_id`,`isPaidBroadcasting`)VALUES(ChannelID,TRUE);
-    --FETCH（行の取り出し）
+    /*FETCH（行の取り出し）*/
     FETCH PBCs INTO ChannelID,ChannelNo;
     END WHILE;
 
 CLOSE PBCs;
 
---一時テーブルの内容を消去する。
+/*一時テーブルの内容を消去する。*/
 DELETE FROM `temp_PaidBroadcasting`;
 
 END//
