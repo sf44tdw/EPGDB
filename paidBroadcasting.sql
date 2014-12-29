@@ -12,7 +12,7 @@ FOREIGN KEY (`channel_id`) REFERENCES `channel` (`channel_id`)
 
 /*
 *有料区分自動入力プロシージャ。
-*有料放送のチャンネルだけ入力する。事前に一時テーブルにとろくs対チャンネル番号を入力しておく必要がある。
+*有料放送のチャンネルだけ入力する。事前に一時テーブルに登録したいチャンネル番号を入力しておく必要がある。
  */
 DELIMITER //
 CREATE PROCEDURE INSERT_PAIDBROADCASTING()
@@ -21,13 +21,13 @@ BEGIN
 DECLARE ChannelID VARCHAR(20);
 DECLARE ChannelNo int;
 
- -- ハンドラで利用する変数 v_done を宣言
+-- ハンドラで利用する変数 v_done を宣言
 DECLARE v_done INT DEFAULT 0;
 
---カーソルの宣言。一時テーブルから、見られない有料放送のチャンネルIDとチャンネル番号の重複のない一覧を取得。
+--カーソルの宣言。一時テーブルに登録されたチャンネル番号を元にチャンネル一覧テーブルを検索し、チャンネルIDとチャンネル番号の重複のない一覧を取得。
 DECLARE PBCs cursor FOR SELECT DISTINCT `channel_id`,`channel_no` FROM `channel` WHERE `channel_no`= (SELECT DISTINCT `channel_no` FROM `temp_PaidBroadcasting`);
  
- -- SQLステートが02000の場合にv_doneを1にするハンドラを宣言
+ -- SQLステートが02000(検索する行がなくなった)の場合にv_doneを1にするハンドラを宣言
 DECLARE continue handler FOR sqlstate '02000' SET v_done = 1;
 
 --カーソルを開く
