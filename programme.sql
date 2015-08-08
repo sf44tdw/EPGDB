@@ -36,3 +36,62 @@ BEGIN
 INSERT INTO `programme` (`channel_id`,`event_id`,`title`,`start_datetime`,`stop_datetime`,`insert_datetime`) VALUES (`_channel_id`,`_event_id`,`_title`,`_start_datetime`,`_stop_datetime`,(SELECT NOW()));
 END//
 DELIMITER ;
+
+
+
+/*
+MySQLではCHECK制約が使えないのでトリガーで代用する。
+レコードの追加、更新の際に、放送開始時刻が放送終了時刻以前になっていたら、
+追加、更新しようとしているレコードのnullにしてはいけないフィールドにnullを設定し、ERROR 1048を発生させることで、問題のあるレコードが作られないようにする。
+タブを入れると"Display all xxx possibilities? (y or n)"と出てくるのでタブを除去。
+ */
+delimiter $$
+
+CREATE TRIGGER UPDATE_PROGRAMME BEFORE UPDATE ON `programme` FOR EACH ROW
+BEGIN
+IF NEW.`start_datetime` >= NEW.`stop_datetime` THEN
+SET NEW.`channel_id` = NULL;
+END IF;
+END;$$
+
+
+
+CREATE TRIGGER INSERT_PROGRAMME BEFORE INSERT ON `programme` FOR EACH ROW
+BEGIN
+IF NEW.`start_datetime` >= NEW.`stop_datetime` THEN
+SET NEW.`channel_id` = NULL;
+END IF;
+END;$$
+
+delimiter ;
+
+/*
+mysql> call INSERT_PROGRAMME("BS_238","DUMMY_ID","DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 10:00:00");
+ERROR 1048 (23000): Column 'channel_id' cannot be null
+mysql> call INSERT_PROGRAMME("BS_238","DUMMY_ID","DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 09:00:00");
+ERROR 1048 (23000): Column 'channel_id' cannot be null
+mysql> call INSERT_PROGRAMME("BS_238","DUMMY_ID","DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 11:00:00");
+Query OK, 1 row affected, 1 warning (0.05 sec)
+
+mysql> select * from programme where event_id="DUMMY_ID";
++-------+------------+----------+-------------+---------------------+---------------------+---------------------+
+| id    | channel_id | event_id | title       | start_datetime      | stop_datetime       | insert_datetime     |
++-------+------------+----------+-------------+---------------------+---------------------+---------------------+
+| 52137 | BS_238     |        0 | DUMMY_TITLE | 2015-08-10 10:00:00 | 2015-08-10 11:00:00 | 2015-08-08 19:41:48 |
++-------+------------+----------+-------------+---------------------+---------------------+---------------------+
+1 row in set, 1 warning (0.04 sec)
+
+mysql> update programme set start_datetime="2015-08-20 10:00:00" where id=52137;
+ERROR 1048 (23000): Column 'channel_id' cannot be null
+mysql> update programme set start_datetime="2015-08-03 10:00:00" where id=52137;
+Query OK, 1 row affected (0.03 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> select * from programme where event_id="DUMMY_ID";
++-------+------------+----------+-------------+---------------------+---------------------+---------------------+
+| id    | channel_id | event_id | title       | start_datetime      | stop_datetime       | insert_datetime     |
++-------+------------+----------+-------------+---------------------+---------------------+---------------------+
+| 52137 | BS_238     |        0 | DUMMY_TITLE | 2015-08-03 10:00:00 | 2015-08-10 11:00:00 | 2015-08-08 19:41:48 |
++-------+------------+----------+-------------+---------------------+---------------------+---------------------+
+1 row in set, 1 warning (0.01 sec)
+*/
