@@ -42,7 +42,7 @@ DELIMITER ;
 /*
 MySQLではCHECK制約が使えないのでトリガーで代用する。
 レコードの追加、更新の際に、放送開始時刻が放送終了時刻以前になっていたら、
-追加、更新しようとしているレコードのnullにしてはいけないフィールドにnullを設定し、ERROR 1048を発生させることで、問題のあるレコードが作られないようにする。
+追加、更新しようとしているレコードのnullにしてはいけないフィールド(channel_id)にnullを設定し、ERROR 1048 (23000): Column 'channel_id' cannot be nullを発生させることで、問題のあるレコードが作られないようにする。
 タブを入れると"Display all xxx possibilities? (y or n)"と出てくるのでタブを除去。
  */
 delimiter $$
@@ -94,4 +94,11 @@ mysql> select * from programme where event_id="DUMMY_ID";
 | 52137 | BS_238     |        0 | DUMMY_TITLE | 2015-08-03 10:00:00 | 2015-08-10 11:00:00 | 2015-08-08 19:41:48 |
 +-------+------------+----------+-------------+---------------------+---------------------+---------------------+
 1 row in set, 1 warning (0.01 sec)
+
+mysql> select * from programme where event_id="DUMMY_ID";
+Empty set, 1 warning (0.06 sec)
+mysql> call INSERT_PROGRAMME("BS_238","DUMMY_ID","DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 09:00:00");
+ERROR 1048 (23000): Column 'channel_id' cannot be null
+mysql> select * from programme where event_id="DUMMY_ID";
+Empty set, 1 warning (0.01 sec)
 */
