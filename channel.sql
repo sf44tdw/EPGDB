@@ -12,7 +12,7 @@ CREATE TABLE `channel` (
   `insert_datetime` datetime NOT NULL,
   PRIMARY KEY (`channel_id`),
   UNIQUE KEY `ch_id_no` (`channel_id`,`channel_no`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /* チャンネル一覧テーブルに内容を追加する。追加日時は自動入力する。
  */
