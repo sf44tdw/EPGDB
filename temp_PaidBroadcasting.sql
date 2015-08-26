@@ -11,6 +11,7 @@ PRIMARY KEY (`channel_no`)
  */
 DELIMITER //
 CREATE PROCEDURE INSERT_temp_PaidBroadcasting(IN `_channel_no` int)
+SQL SECURITY INVOKER
 BEGIN
 INSERT INTO `temp_PaidBroadcasting` (`channel_no`) VALUES (`_channel_no`);
 END//

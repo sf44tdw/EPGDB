@@ -18,6 +18,7 @@ CREATE TABLE `channel` (
  */
 DELIMITER //
 CREATE PROCEDURE INSERT_CHANNEL(IN `_channel_id` VARCHAR(20),IN `_channel_no` int,IN `_display_name` text)
+SQL SECURITY INVOKER
 BEGIN
 INSERT INTO `channel` (`channel_id`,`channel_no`,`display_name`,`insert_datetime`) VALUES (`_channel_id`,`_channel_no`,`_display_name`,(SELECT NOW()));
 END//

@@ -17,6 +17,7 @@ WHERE channel.channel_id=programme.channel_id and not exists (select * from paid
  */
 DELIMITER //
 CREATE PROCEDURE GET_TITLE(IN `_channel_no` int,IN `_start_datetime` DATETIME)
+SQL SECURITY INVOKER
 BEGIN
 SELECT `title` FROM `programme_channel_no` WHERE channel_no = _channel_no and start_datetime BETWEEN _start_datetime AND DATE_ADD(_start_datetime, INTERVAL 1 MINUTE);
 END//
@@ -31,6 +32,7 @@ DELIMITER ;
  */
 DELIMITER //
 CREATE PROCEDURE GET_PROGRAMME_FUZZY(IN `_channel_id` VARCHAR(20), IN `_channel_no` int,IN `_start_datetime` DATETIME)
+SQL SECURITY INVOKER
 BEGIN
 SELECT * FROM `programme_channel_no` WHERE channel_id =_channel_id and channel_no = _channel_no and start_datetime >= NOW() and start_datetime = _start_datetime;
 END//

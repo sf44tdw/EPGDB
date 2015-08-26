@@ -32,6 +32,7 @@ SQLException e.getSQLState()でエラー番号はわかるのでそうする。
  */
 DELIMITER //
 CREATE PROCEDURE INSERT_PROGRAMME(IN `_channel_id` VARCHAR(20),IN `_event_id` int,IN `_title` text,IN `_start_datetime` DATETIME,IN `_stop_datetime` DATETIME)
+SQL SECURITY INVOKER
 BEGIN
 INSERT INTO `programme` (`channel_id`,`event_id`,`title`,`start_datetime`,`stop_datetime`,`insert_datetime`) VALUES (`_channel_id`,`_event_id`,`_title`,`_start_datetime`,`_stop_datetime`,(SELECT NOW()));
 END//
