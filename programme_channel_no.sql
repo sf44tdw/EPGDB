@@ -1,20 +1,20 @@
 /*
 物理チャンネル読み替え用ビュー。
  */
-CREATE SQL SECURITY INVOKER VIEW programme_channel_no AS 
-SELECT channel.channel_id,
-channel.channel_no,
-programme.event_id,
-programme.title,
-programme.start_datetime,
-programme.stop_datetime FROM channel,programme
-WHERE channel.channel_id=programme.channel_id;
+CREATE SQL SECURITY INVOKER VIEW PROGRAMME_CHANNEL_NO AS 
+SELECT CHANNEL.CHANNEL_ID,
+CHANNEL.CHANNEL_NO,
+PROGRAMME.EVENT_ID,
+PROGRAMME.TITLE,
+PROGRAMME.START_DATETIME,
+PROGRAMME.STOP_DATETIME FROM CHANNEL,PROGRAMME
+WHERE CHANNEL.CHANNEL_ID=PROGRAMME.CHANNEL_ID;
 
 /*
 物理チャンネル読み替え用ビューから指定されたチャンネルの、指定時刻から1分以内に始まる番組の番組名を取得する。
-*_channel_no         :物理チャンネル番号
-*_start_datetime     :番組の開始時刻
+*_CHANNEL_NO         :物理チャンネル番号
+*_START_DATETIME     :番組の開始時刻
  */
-SELECT `title` FROM `programme_channel_no` WHERE channel_no = _channel_no and start_datetime BETWEEN _start_datetime AND DATE_ADD(_start_datetime, INTERVAL 1 
+SELECT `TITLE` FROM `PROGRAMME_CHANNEL_NO` WHERE CHANNEL_NO = _CHANNEL_NO AND START_DATETIME BETWEEN _START_DATETIME AND DATE_ADD(_START_DATETIME, INTERVAL 1 
 
 

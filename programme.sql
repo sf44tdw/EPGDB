@@ -1,96 +1,100 @@
 /*番組情報用。
 *開始時刻が終了時刻より前にあってもDB側では感知しない。
-id              :主キー。自動で生成され、加算される。
-event_id        :番組ID(しょっちゅう再利用されているから主キーにはしない)
-channel         :チャンネルID(チャンネル一覧テーブルから参照させて物理チャンネルを確認する。)
-title           :タイトル
-start           :開始時刻(インデックスつき)
-stop            :終了時刻
-insert_datetime :この情報の追加日時(自動入力)
+ID              :主キー。自動で生成され、加算される。
+EVENT_ID        :番組ID(しょっちゅう再利用されているから主キーにはしない)
+CHANNEL         :チャンネルID(チャンネル一覧テーブルから参照させて物理チャンネルを確認する。)
+TITLE           :タイトル
+START           :開始時刻(インデックスつき)
+STOP            :終了時刻
+INSERT_DATETIME :この情報の追加日時(自動入力)
 番組ID,チャンネルID,開始時刻の全てが同じデータは登録できない。
  */
-CREATE TABLE `programme` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `channel_id` VARCHAR(20) NOT NULL,
-  `event_id` int(11) NOT NULL,
-  `title` text NOT NULL,
-  `start_datetime` datetime NOT NULL,
-  `stop_datetime` datetime NOT NULL,
-  `insert_datetime` timestamp default current_timestamp(),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `ch_id_no` (`channel_id`,`event_id`,`start_datetime`),
-  KEY `channel_id` (`channel_id`),
-  KEY `start_datetime_i` (`start_datetime`),
-  CONSTRAINT `programme_ibfk_1` FOREIGN KEY (`channel_id`) REFERENCES `channel` (`channel_id`)
-) ENGINE=InnoDB;
+CREATE TABLE `PROGRAMME` (
+  `ID` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `CHANNEL_ID` VARCHAR(20) NOT NULL,
+  `EVENT_ID` INT(11) NOT NULL,
+  `TITLE` TEXT NOT NULL,
+  `START_DATETIME` DATETIME NOT NULL,
+  `STOP_DATETIME` DATETIME NOT NULL,
+  `INSERT_DATETIME` TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+  PRIMARY KEY (`ID`),
+  UNIQUE KEY `CH_ID_NO` (`CHANNEL_ID`,`EVENT_ID`,`START_DATETIME`),
+  KEY `CHANNEL_ID` (`CHANNEL_ID`),
+  KEY `START_DATETIME_I` (`START_DATETIME`),
+  CONSTRAINT `PROGRAMME_IBFK_1` FOREIGN KEY (`CHANNEL_ID`) REFERENCES `CHANNEL` (`CHANNEL_ID`)
+) ENGINE=INNODB;
 
 /*
-MySQLではCHECK制約が使えないのでトリガーで代用する。
+MYSQLではCHECK制約が使えないのでトリガーで代用する。
 レコードの追加、更新の際に、放送開始時刻が放送終了時刻以前になっていたら、
-追加、更新しようとしているレコードのnullにしてはいけないフィールド(channel_id)にnullを設定し、ERROR 1048 (23000): Column 'channel_id' cannot be nullを発生させることで、問題のあるレコードが作られないようにする。
-タブを入れると"Display all xxx possibilities? (y or n)"と出てくるのでタブを除去。
-SIGNALは、MySQL5.1では使えない。
+追加、更新しようとしているレコードのNULLにしてはいけないフィールド(CHANNEL_ID)にNULLを設定し、ERROR 1048 (23000): COLUMN 'CHANNEL_ID' CANNOT BE NULLを発生させることで、問題のあるレコードが作られないようにする。
+タブを入れると"DISPLAY ALL XXX POSSIBILITIES? (Y OR N)"と出てくるのでタブを除去。
+SIGNALは、MYSQL5.1では使えない。
  */
-delimiter $$
+DELIMITER $$
 
-CREATE TRIGGER UPDATE_PROGRAMME BEFORE UPDATE ON `programme` FOR EACH ROW
+CREATE TRIGGER UPDATE_PROGRAMME BEFORE UPDATE ON `PROGRAMME` FOR EACH ROW
 BEGIN
-IF NEW.`start_datetime` >= NEW.`stop_datetime` THEN
-SET NEW.`channel_id` = NULL;
+IF NEW.`START_DATETIME` >= NEW.`STOP_DATETIME` THEN
+SET NEW.`CHANNEL_ID` = NULL;
 END IF;
 END;$$
 
 
 
-CREATE TRIGGER INSERT_PROGRAMME BEFORE INSERT ON `programme` FOR EACH ROW
+CREATE TRIGGER INSERT_PROGRAMME BEFORE INSERT ON `PROGRAMME` FOR EACH ROW
 BEGIN
-IF NEW.`start_datetime` >= NEW.`stop_datetime` THEN
-SET NEW.`channel_id` = NULL;
+IF NEW.`START_DATETIME` >= NEW.`STOP_DATETIME` THEN
+SET NEW.`CHANNEL_ID` = NULL;
 END IF;
 END;$$
 
-delimiter ;
+DELIMITER ;
+
 /*
-INSERT INTO `programme` (`channel_id`,`event_id`,`title`,`start_datetime`,`stop_datetime`) VALUES ("ID1",100,"DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 10:00:00");
-INSERT INTO `programme` (`channel_id`,`event_id`,`title`,`start_datetime`,`stop_datetime`) VALUES ("ID1",100,"DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 09:00:00");
-INSERT INTO `programme` (`channel_id`,`event_id`,`title`,`start_datetime`,`stop_datetime`) VALUES ("ID1",100,"DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 11:00:00");
+SELECT * FROM PROGRAMME;
+INSERT INTO `PROGRAMME` (`CHANNEL_ID`,`EVENT_ID`,`TITLE`,`START_DATETIME`,`STOP_DATETIME`) VALUES ("ID1",100,"DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 10:00:00");
+INSERT INTO `PROGRAMME` (`CHANNEL_ID`,`EVENT_ID`,`TITLE`,`START_DATETIME`,`STOP_DATETIME`) VALUES ("ID1",100,"DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 09:00:00");
+INSERT INTO `PROGRAMME` (`CHANNEL_ID`,`EVENT_ID`,`TITLE`,`START_DATETIME`,`STOP_DATETIME`) VALUES ("ID1",100,"DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 11:00:00");
+SELECT * FROM PROGRAMME;
 
-update programme set start_datetime="2015-08-20 10:00:00" where event_id=100;
-update programme set start_datetime="2015-08-03 10:00:00" where event_id=100;
-
-select * from programme;
+UPDATE PROGRAMME SET START_DATETIME="2015-08-20 10:00:00" WHERE EVENT_ID=100;
+UPDATE PROGRAMME SET START_DATETIME="2015-08-03 10:00:00" WHERE EVENT_ID=100;
+SELECT * FROM PROGRAMME;
 */
 
 /*
-mysql> select * from programme;
+mysql> SELECT * FROM PROGRAMME;
 Empty set (0.00 sec)
 
-mysql> INSERT INTO `programme` (`channel_id`,`event_id`,`title`,`start_datetime`,`stop_datetime`) VALUES ("ID1",100,"DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 10:00:00");
-ERROR 1048 (23000): Column 'channel_id' cannot be null
-mysql> INSERT INTO `programme` (`channel_id`,`event_id`,`title`,`start_datetime`,`stop_datetime`) VALUES ("ID1",100,"DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 09:00:00");
-ERROR 1048 (23000): Column 'channel_id' cannot be null
-mysql> INSERT INTO `programme` (`channel_id`,`event_id`,`title`,`start_datetime`,`stop_datetime`) VALUES ("ID1",100,"DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 11:00:00");
-Query OK, 1 row affected (0.03 sec)
+mysql> INSERT INTO `PROGRAMME` (`CHANNEL_ID`,`EVENT_ID`,`TITLE`,`START_DATETIME`,`STOP_DATETIME`) VALUES ("ID1",100,"DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 10:00:00");
+ERROR 1048 (23000): Column 'CHANNEL_ID' cannot be null
+mysql> INSERT INTO `PROGRAMME` (`CHANNEL_ID`,`EVENT_ID`,`TITLE`,`START_DATETIME`,`STOP_DATETIME`) VALUES ("ID1",100,"DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 09:00:00");
+ERROR 1048 (23000): Column 'CHANNEL_ID' cannot be null
+mysql> INSERT INTO `PROGRAMME` (`CHANNEL_ID`,`EVENT_ID`,`TITLE`,`START_DATETIME`,`STOP_DATETIME`) VALUES ("ID1",100,"DUMMY_TITLE","2015-08-10 10:00:00","2015-08-10 11:00:00");
+SELECT * FROM PROGRAMME;
+Query OK, 1 row affected (0.02 sec)
 
-mysql> select * from programme;
+mysql> SELECT * FROM PROGRAMME;
 +----+------------+----------+-------------+---------------------+---------------------+---------------------+
-| id | channel_id | event_id | title       | start_datetime      | stop_datetime       | insert_datetime     |
+| ID | CHANNEL_ID | EVENT_ID | TITLE       | START_DATETIME      | STOP_DATETIME       | INSERT_DATETIME     |
 +----+------------+----------+-------------+---------------------+---------------------+---------------------+
-|  4 | ID1        |      100 | DUMMY_TITLE | 2015-08-10 10:00:00 | 2015-08-10 11:00:00 | 2017-03-12 00:08:20 |
+|  1 | ID1        |      100 | DUMMY_TITLE | 2015-08-10 10:00:00 | 2015-08-10 11:00:00 | 2017-03-12 16:40:47 |
 +----+------------+----------+-------------+---------------------+---------------------+---------------------+
 1 row in set (0.00 sec)
 
-mysql> update programme set start_datetime="2015-08-20 10:00:00" where event_id=100;
-ERROR 1048 (23000): Column 'channel_id' cannot be null
-mysql> update programme set start_datetime="2015-08-03 10:00:00" where event_id=100;
-Query OK, 1 row affected (0.04 sec)
+mysql>
+mysql> UPDATE PROGRAMME SET START_DATETIME="2015-08-20 10:00:00" WHERE EVENT_ID=100;
+ERROR 1048 (23000): Column 'CHANNEL_ID' cannot be null
+mysql> UPDATE PROGRAMME SET START_DATETIME="2015-08-03 10:00:00" WHERE EVENT_ID=100;
+SELECT * FROM PROGRAMME;Query OK, 1 row affected (0.02 sec)
 Rows matched: 1  Changed: 1  Warnings: 0
 
-mysql> select * from programme;
+mysql> SELECT * FROM PROGRAMME;
 +----+------------+----------+-------------+---------------------+---------------------+---------------------+
-| id | channel_id | event_id | title       | start_datetime      | stop_datetime       | insert_datetime     |
+| ID | CHANNEL_ID | EVENT_ID | TITLE       | START_DATETIME      | STOP_DATETIME       | INSERT_DATETIME     |
 +----+------------+----------+-------------+---------------------+---------------------+---------------------+
-|  4 | ID1        |      100 | DUMMY_TITLE | 2015-08-03 10:00:00 | 2015-08-10 11:00:00 | 2017-03-12 00:08:20 |
+|  1 | ID1        |      100 | DUMMY_TITLE | 2015-08-03 10:00:00 | 2015-08-10 11:00:00 | 2017-03-12 16:40:47 |
 +----+------------+----------+-------------+---------------------+---------------------+---------------------+
 1 row in set (0.00 sec)
 
@@ -102,6 +106,6 @@ mysql>
 /*
 番組情報テーブルに内容を追加する。追加日時は自動入力する。
 チャンネルテーブルにチャンネルIDが登録されていない場合、参照整合性制約により登録できないことを前提とする。
-SQLException e.getSQLState()でエラー番号はわかるのでそうする。
+SQLEXCEPTION E.GETSQLSTATE()でエラー番号はわかるのでそうする。
  */
-INSERT INTO `programme` (`channel_id`,`event_id`,`title`,`start_datetime`,`stop_datetime`) VALUES (`_channel_id`,`_event_id`,`_title`,`_start_datetime`,`_stop_datetime`);
+INSERT INTO `PROGRAMME` (`CHANNEL_ID`,`EVENT_ID`,`TITLE`,`START_DATETIME`,`STOP_DATETIME`) VALUES (`_CHANNEL_ID`,`_EVENT_ID`,`_TITLE`,`_START_DATETIME`,`_STOP_DATETIME`);
